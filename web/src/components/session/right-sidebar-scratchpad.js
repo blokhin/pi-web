@@ -1,3 +1,5 @@
+import { withBasePath } from '../../shared/base-path.js';
+
 export function createScratchpadController({
   projectPath = '',
   textarea,
@@ -19,7 +21,9 @@ export function createScratchpadController({
   async function load() {
     if (!projectPath || !textarea) return;
     try {
-      const res = await fetchImpl(`/api/scratchpad?project=${encodeURIComponent(projectPath)}`);
+      const res = await fetchImpl(
+        withBasePath(`/api/scratchpad?project=${encodeURIComponent(projectPath)}`),
+      );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const content = data.content ?? '';
@@ -37,7 +41,7 @@ export function createScratchpadController({
     if (content === lastSaved) return;
     setStatus('Saving…', 'saving');
     try {
-      const res = await fetchImpl('/api/scratchpad', {
+      const res = await fetchImpl(withBasePath('/api/scratchpad'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ project: projectPath, content }),

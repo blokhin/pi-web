@@ -3,6 +3,9 @@
 // HTTP/1.1 connections per host at six, and a session tab already holds the
 // per-session stream, so a stream per consumer starves fetches once a couple of
 // tabs are open.
+
+import { withBasePath } from './base-path.js';
+
 function parseJSON(data) {
   try {
     return JSON.parse(data);
@@ -33,7 +36,7 @@ function attachDispatcher(entry, event) {
 
 function openStream(EventSourceImpl, topic, entry) {
   if (!entry.stream) {
-    entry.stream = new EventSourceImpl(`/events?id=${encodeURIComponent(topic)}`);
+    entry.stream = new EventSourceImpl(withBasePath(`/events?id=${encodeURIComponent(topic)}`));
     entry.attached = new Set();
     bindPageLifecycle(EventSourceImpl, topic, entry);
   }

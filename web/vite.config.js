@@ -3,9 +3,13 @@ import { defineConfig } from 'vite';
 import { resolve } from 'node:path';
 
 export default defineConfig({
-  // The Go server serves built assets under /static/. Without this, the chunk
-  // loader resolves dynamic imports against /assets/ and they 404.
-  base: '/static/',
+  // The Go server serves built assets under /static/; the Go shell references
+  // the entry script at /static/assets/<hash>.js (see internal/render/assets.go).
+  // A relative base keeps chunk loader URLs relative to that script, so
+  // dynamic imports resolve to /static/assets/... at the origin root AND to
+  // <mount>/static/assets/... when a reverse proxy mounts the app under a URL
+  // prefix (X-Forwarded-Prefix) — no rebuild per mount point.
+  base: './',
   plugins: [svelte()],
   build: {
     manifest: true,

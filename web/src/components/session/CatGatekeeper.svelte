@@ -6,6 +6,7 @@
   // high z-index layer is viewport-relative regardless of ancestor transforms.
   import { onMount } from 'svelte';
   import { setupCatGatekeeper } from '../../session/cat-gatekeeper/cat-gatekeeper.js';
+  import { withBasePath } from '../../shared/base-path.js';
 
   let overlayEl = $state();
   let videoEl = $state();
@@ -152,7 +153,7 @@
       {#if everShown}<video
           class="cat-video"
           bind:this={videoEl}
-          src="/cat.webm"
+          src={withBasePath('/cat.webm')}
           autoplay
           loop
           muted

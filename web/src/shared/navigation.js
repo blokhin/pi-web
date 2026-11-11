@@ -4,6 +4,8 @@
 // navigates between SPA routes (e.g. the sessions index → a session view)
 // without a full page reload.
 
+import { withBasePath } from './base-path.js';
+
 function resolveWindow(windowImpl) {
   if (windowImpl) return windowImpl;
   return typeof window !== 'undefined' ? window : undefined;
@@ -15,7 +17,10 @@ function resolveWindow(windowImpl) {
 export function navigate(url, { windowImpl, state } = {}) {
   const win = resolveWindow(windowImpl);
   if (!url || !win) return;
-  win.history.pushState(state || {}, '', url);
+  // The browser lives in the prefixed URL space behind a reverse proxy, so
+  // every pushed URL (route-space, or an already-prefixed path read back
+  // from location — withBasePath is idempotent) gains the mount prefix here.
+  win.history.pushState(state || {}, '', withBasePath(url));
 }
 
 // Click handler for <a> elements that point at an internal SPA route. Defers to

@@ -1,5 +1,6 @@
 <script>
   import { t } from '../../shared/i18n.js';
+  import { withBasePath } from '../../shared/base-path.js';
 
   let { model, sessionId = '', fetchImpl = null, navigateTo = null, windowSize = 500 } = $props();
 
@@ -23,7 +24,9 @@
     loading = true;
     error = '';
     try {
-      const url = `/api/session?id=${encodeURIComponent(sessionId)}&from=${requestFrom}&count=${requestCount}`;
+      const url = withBasePath(
+        `/api/session?id=${encodeURIComponent(sessionId)}&from=${requestFrom}&count=${requestCount}`,
+      );
       const res = await effectiveFetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const payload = await res.json();

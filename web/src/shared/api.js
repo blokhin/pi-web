@@ -1,3 +1,5 @@
+import { withBasePath } from './base-path.js';
+
 async function parseJSONResponse(response) {
   let payload;
   try {
@@ -16,12 +18,12 @@ async function parseJSONResponse(response) {
 }
 
 export async function getJSON(url, { fetchImpl = fetch } = {}) {
-  const response = await fetchImpl(url, { headers: { Accept: 'application/json' } });
+  const response = await fetchImpl(withBasePath(url), { headers: { Accept: 'application/json' } });
   return parseJSONResponse(response);
 }
 
 export async function postJSON(url, body, { fetchImpl = fetch } = {}) {
-  const response = await fetchImpl(url, {
+  const response = await fetchImpl(withBasePath(url), {
     method: 'POST',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

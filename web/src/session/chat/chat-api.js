@@ -1,5 +1,7 @@
+import { withBasePath } from '../../shared/base-path.js';
+
 export function chatUrl(path, sessionId) {
-  return `${path}?id=${encodeURIComponent(sessionId)}`;
+  return withBasePath(`${path}?id=${encodeURIComponent(sessionId)}`);
 }
 
 export function cancelChat(sessionId, { fetchImpl = fetch } = {}) {
@@ -15,7 +17,7 @@ export function getWorkerStatus(sessionId, { fetchImpl = fetch } = {}) {
 }
 
 export function listModels({ fetchImpl = fetch } = {}) {
-  return fetchImpl('/api/models');
+  return fetchImpl(withBasePath('/api/models'));
 }
 
 export function getCommands(sessionId, { load = false } = {}, { fetchImpl = fetch } = {}) {

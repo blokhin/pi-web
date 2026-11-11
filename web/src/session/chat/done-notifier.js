@@ -1,4 +1,5 @@
 import { writeSetting } from '../../shared/settings-store.js';
+import { withBasePath } from '../../shared/base-path.js';
 
 export const DONE_NOTIFY_STORAGE_KEY = 'pi-share:v1:notify-on-done';
 export const DONE_SOUND_STORAGE_KEY = 'pi-share:v1:done-sound';
@@ -35,7 +36,7 @@ export function playDoneSound({
   try {
     const AudioCtor = windowImpl.Audio;
     if (!AudioCtor) return;
-    const src = audioSrc || `/sounds/${getSelectedSound({ storage })}`;
+    const src = audioSrc || withBasePath(`/sounds/${getSelectedSound({ storage })}`);
     const audio = new AudioCtor(src);
     audio.volume = 0.7;
     const p = audio.play();
@@ -55,7 +56,7 @@ export function showDoneNotification({
     const N = windowImpl.Notification;
     if (!N || N.permission !== 'granted') return;
     if (!documentImpl.hidden) return;
-    const n = new N(title, { body, icon: '/icon.svg', tag: 'pi-session-done' });
+    const n = new N(title, { body, icon: withBasePath('/icon.svg'), tag: 'pi-session-done' });
     n.onclick = () => {
       try {
         windowImpl.focus();
@@ -112,7 +113,7 @@ export async function registerPushSubscription({ windowImpl = window, fetchImpl 
     const navImpl = windowImpl.navigator;
     if (!navImpl || !navImpl.serviceWorker || !windowImpl.PushManager) return false;
     const reg = await navImpl.serviceWorker.ready;
-    const keyResp = await fetchImpl('/api/push/vapid');
+    const keyResp = await fetchImpl(withBasePath('/api/push/vapid'));
     if (!keyResp.ok) return false;
     const { publicKey } = await keyResp.json();
     if (!publicKey) return false;
@@ -121,7 +122,7 @@ export async function registerPushSubscription({ windowImpl = window, fetchImpl 
       sub = await _subscribePush(reg, publicKey);
     }
     const body = sub.toJSON ? sub.toJSON() : sub;
-    await fetchImpl('/api/push/subscribe', {
+    await fetchImpl(withBasePath('/api/push/subscribe'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -144,7 +145,7 @@ export async function unregisterPushSubscription({ windowImpl = window, fetchImp
     if (!sub) return;
     const endpoint = sub.endpoint;
     await sub.unsubscribe();
-    await fetchImpl('/api/push/unsubscribe', {
+    await fetchImpl(withBasePath('/api/push/unsubscribe'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ endpoint }),
@@ -251,7 +252,7 @@ export function setupAppBadgeClearing({ documentImpl = document, windowImpl = wi
 
 export async function fetchAvailableSounds({ fetchImpl = fetch } = {}) {
   try {
-    const resp = await fetchImpl('/api/sounds');
+    const resp = await fetchImpl(withBasePath('/api/sounds'));
     if (!resp.ok) {
       return { sounds: ['cat.mp3', 'done.mp3'], default: 'cat.mp3' };
     }

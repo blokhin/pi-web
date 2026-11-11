@@ -2,8 +2,10 @@
  * annotation-api.js — thin client for the /api/annotations endpoint.
  * Annotations are keyed by session id and persisted server-side (SQLite).
  */
+import { withBasePath } from '../../shared/base-path.js';
+
 export function createAnnotationApi({ sessionId, fetchImpl = fetch } = {}) {
-  const base = `/api/annotations?session=${encodeURIComponent(sessionId)}`;
+  const base = withBasePath(`/api/annotations?session=${encodeURIComponent(sessionId)}`);
 
   async function list() {
     const res = await fetchImpl(base);

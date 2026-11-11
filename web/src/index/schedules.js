@@ -1,4 +1,5 @@
 import { getJSON, postJSON } from '../shared/api.js';
+import { withBasePath } from '../shared/base-path.js';
 
 // Frequency presets the editor offers. 'custom' surfaces a raw cron field;
 // 'manual' stores no cron (Run-now only). All others are sugar that compile to a
@@ -106,7 +107,7 @@ export function defaultRunSchedule(id) {
   return postJSON('/api/schedule/run?id=' + encodeURIComponent(id), {});
 }
 export async function defaultDeleteSchedule(id, { fetchImpl = fetch } = {}) {
-  const response = await fetchImpl('/api/schedule?id=' + encodeURIComponent(id), {
+  const response = await fetchImpl(withBasePath('/api/schedule?id=' + encodeURIComponent(id)), {
     method: 'DELETE',
     headers: { Accept: 'application/json' },
   });

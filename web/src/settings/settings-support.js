@@ -1,4 +1,5 @@
 import { configureSettingsSync, hydrateSettings, writeSetting } from '../shared/settings-store.js';
+import { withBasePath } from '../shared/base-path.js';
 
 export async function loadSettings({ windowImpl = window } = {}) {
   const fetchImpl = windowImpl.fetch ? windowImpl.fetch.bind(windowImpl) : undefined;
@@ -27,7 +28,9 @@ export function persistSetting(key, value, { storage = localStorage } = {}) {
 export async function fetchModelGroups({ fetchImpl = fetch } = {}) {
   let models;
   try {
-    const resp = await fetchImpl('/api/models', { headers: { Accept: 'application/json' } });
+    const resp = await fetchImpl(withBasePath('/api/models'), {
+      headers: { Accept: 'application/json' },
+    });
     if (!resp.ok) return [];
     const data = await resp.json();
     models = Array.isArray(data?.models) ? data.models : null;

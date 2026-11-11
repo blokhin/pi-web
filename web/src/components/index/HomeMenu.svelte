@@ -12,6 +12,7 @@
   import { openVersionModal } from '../../shared/version.js';
   import { USER_DOCS_URL, TELEGRAM_INVITE_URL } from '../../shared/links.js';
   import { handleNavClick } from '../../shared/navigation.js';
+  import { withBasePath } from '../../shared/base-path.js';
 
   let {
     open = false,
@@ -105,7 +106,7 @@
     >
     <a
       class="web-menu-item"
-      href="/settings"
+      href={withBasePath('/settings')}
       role="menuitem"
       onclick={(event) => {
         onClose();

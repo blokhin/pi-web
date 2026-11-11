@@ -18,6 +18,7 @@
   import { resetSessionRuntime } from '../session/session-runtime.js';
   import { resetSessionRuntimeContext } from '../session/session-runtime-context.js';
   import { t } from '../shared/i18n.js';
+  import { withBasePath } from '../shared/base-path.js';
 
   // The reactive session model (docs/dev/svelte-migration-plan.md): created once
   // and provided via context so descendant components read from it. Hydrated
@@ -131,7 +132,7 @@
 {:else if error}
   <div class="session-loading session-loading--error">
     <h1>{error}</h1>
-    <p><a href="/">{t('session.backToSessions')}</a></p>
+    <p><a href={withBasePath('/')}>{t('session.backToSessions')}</a></p>
   </div>
 {:else}
   <SessionShell

@@ -1,6 +1,7 @@
 <script>
   import { t } from '../../shared/i18n.js';
   import { handleNavClick } from '../../shared/navigation.js';
+  import { withBasePath } from '../../shared/base-path.js';
   import { prefetchSession } from '../../routes/session-prefetch.js';
   import {
     formatRelativeTime,
@@ -11,7 +12,7 @@
 
   let { session, running = false, runningStatus = null, now = Date.now() } = $props();
 
-  const href = $derived(`/session?id=${encodeURIComponent(session.id || '')}`);
+  const href = $derived(withBasePath(`/session?id=${encodeURIComponent(session.id || '')}`));
   const title = $derived(session.name || session.id || '');
   const modelLabel = $derived(formatRunningModel(runningStatus) || sessionModelLabel(session));
   const runningModel = $derived(running ? formatRunningModel(runningStatus) : '');

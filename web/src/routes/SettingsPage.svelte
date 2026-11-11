@@ -10,6 +10,7 @@
   import SessionsListSettings from '../components/settings/SessionsListSettings.svelte';
   import SessionTitleSettings from '../components/settings/SessionTitleSettings.svelte';
   import { t } from '../shared/i18n.js';
+  import { withBasePath, stripBasePath } from '../shared/base-path.js';
   import { navigate } from '../shared/navigation.js';
   import { loadSettings, persistSetting } from '../settings/settings-support.js';
   import { createAppEvents } from '../shared/app-events.js';
@@ -101,7 +102,7 @@
       cameFromApp =
         !!ref &&
         new URL(ref).origin === window.location.origin &&
-        new URL(ref).pathname !== '/settings';
+        stripBasePath(new URL(ref).pathname) !== '/settings';
     } catch {
       cameFromApp = false;
     }
@@ -156,7 +157,7 @@
         {t('settings.title')}
       </button>
     {:else}
-      <a class="session-header-back" href="/" onclick={onHomeBack}>
+      <a class="session-header-back" href={withBasePath('/')} onclick={onHomeBack}>
         <span>←</span>
         {cameFromApp ? t('common.back') : t('session.back')}
       </a>

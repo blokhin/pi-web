@@ -6,6 +6,7 @@
 // needs. Live-only — the static export wires its own afterRender in export-entry.
 
 import { setIconElement, Loader } from '../shared/icons.js';
+import { withBasePath } from '../shared/base-path.js';
 import { t } from '../shared/i18n.js';
 import { openLabel } from './session-modals.svelte.js';
 import { navigate } from '../shared/navigation.js';
@@ -72,7 +73,7 @@ export function wireSessionContentRuntime({
     btn.disabled = true;
 
     target
-      .fetch(`/api/fork-session?id=${encodeURIComponent(sessionId)}`, {
+      .fetch(withBasePath(`/api/fork-session?id=${encodeURIComponent(sessionId)}`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ entryId }),
@@ -109,7 +110,7 @@ export function wireSessionContentRuntime({
       currentLabel: model.labelMap.get(entryId) || '',
       onSave: ({ entryId: id, label }) => {
         target
-          .fetch(`/api/label-session?id=${encodeURIComponent(sessionId)}`, {
+          .fetch(withBasePath(`/api/label-session?id=${encodeURIComponent(sessionId)}`), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ entryId: id, label }),

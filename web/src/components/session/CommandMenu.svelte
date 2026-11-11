@@ -26,6 +26,7 @@
   import * as sidebarApi from '../../session/ui/sidebar.js';
   import { openVersionModal } from '../../shared/version.js';
   import { navigate, handleNavClick, backState } from '../../shared/navigation.js';
+  import { withBasePath } from '../../shared/base-path.js';
   import { openSessionPalette } from '../../shared/command-palette-runtime.js';
   import { openModelUsage, openFork, openDiff } from '../../session/session-modals.svelte.js';
   import { showToast } from '../../shared/toast.js';
@@ -288,7 +289,7 @@
         {#if item.kind === 'link'}
           <a
             class={itemClass}
-            href={item.href}
+            href={item.external ? item.href : withBasePath(item.href)}
             role="menuitem"
             target={item.external ? '_blank' : undefined}
             rel={item.external ? 'noreferrer' : undefined}
