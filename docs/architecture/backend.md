@@ -318,6 +318,39 @@ PWA / static asset routes (registered outside `Server.Register`):
 | `/manifest.webmanifest`, `/sw.js`, `/icon.svg`, `/icon-maskable.svg`, `/pi-logo.svg`, `/cat.webm` | `internal/ui/pwa.go` (embedded assets) |
 | `/static/assets/app-*.js`, `/static/assets/...` | Embedded Vite SPA bundle and chunks (`internal/app/app.go` + `internal/frontend`) |
 
+## Reverse-Proxy Mount (X-Forwarded-Prefix)
+
+pi-web can be mounted under a URL path by a reverse proxy that strips the
+prefix before forwarding and declares it back with `X-Forwarded-Prefix`:
+
+```nginx
+location /agent/pi/ {
+    proxy_pass http://127.0.0.1:31415/;
+    proxy_set_header X-Forwarded-Prefix /agent/pi;
+}
+```
+
+The server treats paths as always-stripped (it never sees the prefix in
+`r.URL.Path`); the header is only used to build browser-facing URLs:
+
+- `internal/ui/prefix.go` is the single source of truth: `NormalisePrefix`
+  requires a leading slash, strips trailing slashes, and rejects `//`, `..`,
+  injection characters, and values over 256 chars. Absent/empty/malformed
+  means "served at the origin root".
+- The SPA shell (`RenderAppShell`) re-prefixes its root-absolute refs
+  (`/icon.svg`, `/manifest.webmanifest`, `/custom-themes.css`, the hashed
+  `/static/assets/app-*.js`) and injects `window.__PI_BASE_PATH__` so the
+  frontend can prefix its own fetch/SSE/navigation URLs
+  (`web/src/shared/base-path.js`).
+- The service-worker registration uses `<prefix>/sw.js` with scope
+  `<prefix>/`; the served manifest and `sw.js` are rewritten per request
+  (start_url, scope, icons, notification targets).
+- The auth middleware re-attaches the prefix to redirect `Location` headers
+  and scopes the token cookie to `<prefix>/`.
+- Without the header every response is byte-identical to a root deployment,
+  and the Vite build uses a relative base so lazy chunks resolve correctly
+  under any mount without a rebuild.
+
 ## Auth Flow
 
 ```
