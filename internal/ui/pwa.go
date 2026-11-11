@@ -3,7 +3,9 @@ package ui
 import (
 	"bytes"
 	_ "embed"
+	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -42,6 +44,61 @@ var settingsCSS string
 //go:embed embedded/styles/schedules.css
 var schedulesCSS string
 
+// manifestDoc mirrors the fields of embedded/assets/manifest.webmanifest that
+// contain origin-rooted paths; under an X-Forwarded-Prefix they must be
+// re-prefixed so the PWA installs at the proxied path.
+type manifestDoc struct {
+	StartURL string `json:"start_url"`
+	Scope    string `json:"scope"`
+	Icons    []struct {
+		Src string `json:"src"`
+	} `json:"icons"`
+}
+
+// rewriteManifest re-points the manifest's start_url, scope and icon paths at
+// the prefixed mount. With an empty prefix the embedded bytes are served
+// untouched.
+func rewriteManifest(prefix string) []byte {
+	if prefix == "" {
+		return []byte(manifestJSON)
+	}
+	var doc manifestDoc
+	if err := json.Unmarshal([]byte(manifestJSON), &doc); err != nil {
+		return []byte(manifestJSON)
+	}
+	if doc.StartURL != "" {
+		doc.StartURL = PrefixPath(prefix, doc.StartURL)
+	}
+	if doc.Scope != "" {
+		doc.Scope = PrefixPath(prefix, doc.Scope)
+		if !strings.HasSuffix(doc.Scope, "/") {
+			doc.Scope += "/"
+		}
+	}
+	for i := range doc.Icons {
+		doc.Icons[i].Src = PrefixPath(prefix, doc.Icons[i].Src)
+	}
+	out, err := json.MarshalIndent(doc, "", "  ")
+	if err != nil {
+		return []byte(manifestJSON)
+	}
+	return out
+}
+
+// rewriteServiceWorker re-points the service worker's hardcoded origin-rooted
+// URLs (notification icon, notificationclick target) at the prefixed mount.
+// The replacements target the exact literals in embedded/assets/sw.js; with an
+// empty prefix the embedded bytes are served untouched.
+func rewriteServiceWorker(prefix string) []byte {
+	if prefix == "" {
+		return []byte(swJS)
+	}
+	sw := strings.ReplaceAll(swJS, "'/icon.svg'", "'"+prefix+"/icon.svg'")
+	sw = strings.ReplaceAll(sw, "`/session?id=${encodeURIComponent(sessionId)}`", "`"+prefix+"/session?id=${encodeURIComponent(sessionId)}`")
+	sw = strings.ReplaceAll(sw, ": '/'", ": '"+prefix+"'")
+	return []byte(sw)
+}
+
 // registerPWAHandlers serves the manifest, service worker, and icons.
 // Routes are registered without auth: a manifest/icon leaks nothing
 // sensitive, and the service worker must be reachable for installability
@@ -50,14 +107,14 @@ func RegisterPWAHandlers(mux *http.ServeMux) {
 	mux.HandleFunc("/manifest.webmanifest", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/manifest+json")
 		w.Header().Set("Cache-Control", "no-cache")
-		_, _ = w.Write([]byte(manifestJSON))
+		_, _ = w.Write(rewriteManifest(PrefixFromRequest(r)))
 	})
 	mux.HandleFunc("/sw.js", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 		// Allow the SW to control the whole origin.
 		w.Header().Set("Service-Worker-Allowed", "/")
 		w.Header().Set("Cache-Control", "no-cache")
-		_, _ = w.Write([]byte(swJS))
+		_, _ = w.Write(rewriteServiceWorker(PrefixFromRequest(r)))
 	})
 	mux.HandleFunc("/icon.svg", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/svg+xml")

@@ -64,6 +64,11 @@ func (a *Middleware) AllowAnyHost() {
 // a plain 401.
 func (a *Middleware) Wrap(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// The reverse proxy strips the mount prefix from the request path and
+		// declares it via X-Forwarded-Prefix. Redirect Location headers and
+		// cookie paths must re-attach it, since the browser navigates the
+		// prefixed URL space.
+		prefix := ui.PrefixFromRequest(r)
 		if !a.Enabled() && !a.allowsTokenlessHost(r.Host) {
 			http.Error(w, "unrecognized host", http.StatusForbidden)
 			return
@@ -101,7 +106,7 @@ func (a *Middleware) Wrap(h http.HandlerFunc) http.HandlerFunc {
 				// Invalid login attempt — redirect with error flag so
 				// the prompt shows "Invalid token".
 				if fromPost {
-					target := cleanURL(r)
+					target := ui.PrefixPath(prefix, cleanURL(r))
 					if strings.Contains(target, "?") {
 						target += "&error=1"
 					} else {
@@ -116,7 +121,7 @@ func (a *Middleware) Wrap(h http.HandlerFunc) http.HandlerFunc {
 				if c, err := r.Cookie("pi-web-theme"); err == nil {
 					themeCookie = c.Value
 				}
-				ui.RenderAuthPrompt(w, themeCookie)
+				ui.RenderAuthPrompt(w, themeCookie, prefix)
 				return
 			}
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -124,13 +129,19 @@ func (a *Middleware) Wrap(h http.HandlerFunc) http.HandlerFunc {
 		}
 
 		// Token is valid. Set a cookie if it came from query or POST so
-		// subsequent requests authenticate automatically.
+		// subsequent requests authenticate automatically. The cookie path
+		// follows the mount so it is not shared with other apps on the same
+		// origin behind a reverse proxy.
 		shouldSetCookie := fromQuery || fromPost
 		if shouldSetCookie {
+			cookiePath := "/"
+			if prefix != "" {
+				cookiePath = prefix + "/"
+			}
 			http.SetCookie(w, &http.Cookie{
 				Name:     TokenCookieName,
 				Value:    got,
-				Path:     "/",
+				Path:     cookiePath,
 				HttpOnly: true,
 				Secure:   isTLSRequest(r),
 				SameSite: http.SameSiteLaxMode,
@@ -142,7 +153,7 @@ func (a *Middleware) Wrap(h http.HandlerFunc) http.HandlerFunc {
 		// the token arrived via query or POST. This keeps the secret out
 		// of the address bar and browser history.
 		if fromQuery || fromPost {
-			http.Redirect(w, r, cleanURL(r), http.StatusFound)
+			http.Redirect(w, r, ui.PrefixPath(prefix, cleanURL(r)), http.StatusFound)
 			return
 		}
 

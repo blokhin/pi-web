@@ -11,6 +11,11 @@ type liveDocumentData struct {
 	Preload   template.HTML
 	Styles    template.HTML
 	BodyAttrs template.HTMLAttr
+	// Prefix is the validated X-Forwarded-Prefix of the request ("" = served
+	// at the origin root). It re-attaches the proxy-stripped prefix to every
+	// root-absolute URL the document hands the browser, and injects the
+	// window.__PI_BASE_PATH__ runtime global the SPA reads.
+	Prefix string
 }
 
 // themeProvider returns the server-persisted theme so it can be injected into
@@ -121,9 +126,10 @@ func renderLiveDocumentStart(data liveDocumentData) string {
 		b.WriteString(string(data.Preload))
 		b.WriteByte('\n')
 	}
-	b.WriteString("<link rel=\"icon\" type=\"image/svg+xml\" href=\"/icon.svg\">\n")
-	b.WriteString("<link rel=\"apple-touch-icon\" href=\"/icon.svg\">\n")
-	b.WriteString("<link rel=\"manifest\" href=\"/manifest.webmanifest\">\n")
+	prefix := data.Prefix
+	b.WriteString(`<link rel="icon" type="image/svg+xml" href="` + template.HTMLEscapeString(PrefixPath(prefix, "/icon.svg")) + `">` + "\n")
+	b.WriteString(`<link rel="apple-touch-icon" href="` + template.HTMLEscapeString(PrefixPath(prefix, "/icon.svg")) + `">` + "\n")
+	b.WriteString(`<link rel="manifest" href="` + template.HTMLEscapeString(PrefixPath(prefix, "/manifest.webmanifest")) + `">` + "\n")
 	b.WriteString("<meta name=\"theme-color\" content=\"#0e0e13\">\n")
 	b.WriteString("<meta name=\"mobile-web-app-capable\" content=\"yes\">\n")
 	b.WriteString("<meta name=\"apple-mobile-web-app-status-bar-style\" content=\"black-translucent\">\n")
@@ -131,11 +137,18 @@ func renderLiveDocumentStart(data liveDocumentData) string {
 	b.WriteString("<meta name=\"pi-web-theme\" content=\"")
 	b.WriteString(template.HTMLEscapeString(themeProvider()))
 	b.WriteString("\">\n")
+	if prefix != "" {
+		// Declared before any script runs, so the SPA can prefix its own
+		// fetch/SSE/navigation URLs from the very first paint. NormalisePrefix
+		// rejects injection characters, so the value cannot close the tag;
+		// escaping is defense in depth.
+		b.WriteString(`<script>window.__PI_BASE_PATH__="` + template.HTMLEscapeString(prefix) + `";</script>` + "\n")
+	}
 	if data.Styles != "" {
 		b.WriteString(string(data.Styles))
 		b.WriteByte('\n')
 	}
-	b.WriteString("<link rel=\"stylesheet\" href=\"/custom-themes.css\">\n")
+	b.WriteString(`<link rel="stylesheet" href="` + template.HTMLEscapeString(PrefixPath(prefix, "/custom-themes.css")) + `">` + "\n")
 	fontUI, fontContent, fontCode, fontUISize, fontContentSize := fontProvider()
 	b.WriteString("<style id=\"pi-web-fonts\">:root{--font-sans:")
 	b.WriteString(fontUI)
@@ -250,8 +263,17 @@ func themeBootScript(defaultTheme string) template.HTML {
 </script>`, defaultTheme))
 }
 
-func liveServiceWorkerScript() template.HTML {
-	return template.HTML(`<script>if('serviceWorker' in navigator && window.isSecureContext){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(function(){});});}</script>`)
+// liveServiceWorkerScript registers the service worker at the (possibly
+// prefixed) /sw.js and scopes it to the (possibly prefixed) app root, so PWA
+// installs keep working behind a prefix-stripping reverse proxy.
+func liveServiceWorkerScript(prefix string) template.HTML {
+	swPath := template.HTMLEscapeString(PrefixPath(prefix, "/sw.js"))
+	scope := "/"
+	if prefix != "" {
+		scope = prefix + "/"
+	}
+	scope = template.HTMLEscapeString(scope)
+	return template.HTML(`<script>if('serviceWorker' in navigator && window.isSecureContext){window.addEventListener('load',function(){navigator.serviceWorker.register('` + swPath + `',{scope:'` + scope + `'}).catch(function(){});});}</script>`)
 }
 
 func liveDocumentEnd() template.HTML { return template.HTML("</body>\n</html>") }

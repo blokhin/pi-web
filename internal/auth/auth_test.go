@@ -79,6 +79,41 @@ func TestAuthAcceptsQueryAndRedirects(t *testing.T) {
 	}
 }
 
+func TestAuthRedirectAndCookieHonorForwardedPrefix(t *testing.T) {
+	a := New("secret")
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/session?id=x&token=secret", nil)
+	req.Header.Set("X-Forwarded-Prefix", "/agent/pi")
+	a.Wrap(okHandler)(rec, req)
+	if rec.Code != http.StatusFound {
+		t.Fatalf("status = %d, want 302 redirect", rec.Code)
+	}
+	if loc := rec.Header().Get("Location"); loc != "/agent/pi/session?id=x" {
+		t.Fatalf("redirect Location = %q, want /agent/pi/session?id=x", loc)
+	}
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == TokenCookieName && c.Path != "/agent/pi/" {
+			t.Fatalf("cookie Path = %q, want /agent/pi/", c.Path)
+		}
+	}
+}
+
+func TestAuthInvalidPostRedirectKeepsPrefix(t *testing.T) {
+	a := New("secret")
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/session?id=x", strings.NewReader("token=nope"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "text/html")
+	req.Header.Set("X-Forwarded-Prefix", "/agent/pi")
+	a.Wrap(okHandler)(rec, req)
+	if rec.Code != http.StatusFound {
+		t.Fatalf("status = %d, want 302 redirect", rec.Code)
+	}
+	if loc := rec.Header().Get("Location"); loc != "/agent/pi/session?id=x&error=1" {
+		t.Fatalf("redirect Location = %q, want /agent/pi/session?id=x&error=1", loc)
+	}
+}
+
 // Behind Tailscale Serve (X-Forwarded-Proto: https) the cookie must be Secure.
 func TestAuthSetsSecureCookieForForwardedHTTPS(t *testing.T) {
 	a := New("secret")
