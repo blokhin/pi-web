@@ -23,8 +23,13 @@ func appStylesheets() template.HTML {
 //
 // bootstrap, when non-empty, is the base64 session payload the SPA reads to
 // render the first paint without fetching /api/session — see the session route.
-func RenderAppShell(w io.Writer, bootstrap string) error {
-	scriptSrc := template.HTMLEscapeString(appScriptPath)
+//
+// prefix is the request's validated X-Forwarded-Prefix ("" = origin root): the
+// shell's asset URLs are rewritten and window.__PI_BASE_PATH__ is declared so
+// the SPA prefixes its own fetch/SSE/navigation URLs. An empty prefix renders
+// byte-identical output to the pre-prefix shell.
+func RenderAppShell(w io.Writer, bootstrap, prefix string) error {
+	scriptSrc := template.HTMLEscapeString(PrefixPath(prefix, appScriptPath))
 	preload := template.HTML(`<link rel="modulepreload" href="` + scriptSrc + `">`)
 	bootstrapTag := template.HTML("")
 	if bootstrap != "" {
@@ -43,11 +48,12 @@ func RenderAppShell(w io.Writer, bootstrap string) error {
 			Title:   "pi-web",
 			Preload: preload,
 			Styles:  appStylesheets(),
+			Prefix:  prefix,
 		})),
 		ThemeBoot:       liveThemeBootScript(),
 		Bootstrap:       bootstrapTag,
 		AppScript:       template.HTML(`<script type="module" src="` + scriptSrc + `"></script>`),
-		ServiceWorker:   liveServiceWorkerScript(),
+		ServiceWorker:   liveServiceWorkerScript(prefix),
 		LiveDocumentEnd: liveDocumentEnd(),
 	}
 	var buf bytes.Buffer

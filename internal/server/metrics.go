@@ -6,10 +6,12 @@ import (
 	"net/http/pprof"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/shirou/gopsutil/v4/process"
 
+	"pi-web/internal/ui"
 	"pi-web/internal/workers"
 )
 
@@ -111,10 +113,18 @@ func (s *Server) registerPprof(mux *http.ServeMux) {
 }
 
 // handleMetricsPage serves the self-contained dashboard. Same-origin fetches to
-// /api/metrics authenticate automatically via the auth cookie.
+// /api/metrics authenticate automatically via the auth cookie. Under an
+// X-Forwarded-Prefix mount the dashboard's two root-absolute references (the
+// /api/metrics fetch and the pprof link) are re-pointed at the prefixed mount;
+// without a prefix the embedded HTML is served untouched.
 func (s *Server) handleMetricsPage(w http.ResponseWriter, r *http.Request) {
+	html := metricsDashboardHTML
+	if prefix := ui.PrefixFromRequest(r); prefix != "" {
+		html = []byte(strings.ReplaceAll(string(html), `fetch("/api/metrics"`, `fetch("`+prefix+`/api/metrics"`))
+		html = []byte(strings.ReplaceAll(string(html), `href="/api/debug/pprof/"`, `href="`+prefix+`/api/debug/pprof/"`))
+	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, _ = w.Write(metricsDashboardHTML)
+	_, _ = w.Write(html)
 }
 
 // handleMetrics returns a non-blocking snapshot of process- and worker-level

@@ -12,6 +12,8 @@
  * stays in localStorage only and is never synced.
  */
 
+import { withBasePath } from './base-path.js';
+
 // The localStorage keys that are server-backed. Mirrors settingDefaults in
 // internal/server/settings.go.
 export const SERVER_SETTING_KEYS = [
@@ -66,7 +68,7 @@ function defaultStorage() {
 function postSettings(settings) {
   if (!syncFetch) return;
   try {
-    const p = syncFetch('/api/settings', {
+    const p = syncFetch(withBasePath('/api/settings'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ settings }),
@@ -133,7 +135,9 @@ export function applySettingsFromServer(settings, { storage = defaultStorage() }
 export async function hydrateSettings({ fetchImpl = syncFetch, storage = defaultStorage() } = {}) {
   if (!fetchImpl) return null;
   try {
-    const resp = await fetchImpl('/api/settings', { headers: { Accept: 'application/json' } });
+    const resp = await fetchImpl(withBasePath('/api/settings'), {
+      headers: { Accept: 'application/json' },
+    });
     if (!resp.ok) return null;
     const data = await resp.json();
     const settings = data && data.settings ? data.settings : null;

@@ -2,14 +2,19 @@
 // the component keeps only UI orchestration (open/close, toast, navigate) and
 // these stay unit-testable in isolation.
 
-const sessionUrl = (path, id) => `${path}?id=${encodeURIComponent(id)}`;
+import { withBasePath } from '../shared/base-path.js';
+
+const sessionUrl = (path, id) => withBasePath(`${path}?id=${encodeURIComponent(id)}`);
 
 export async function renameSession(sessionId, name, { fetchImpl = fetch } = {}) {
-  const res = await fetchImpl('/api/rename-session?id=' + encodeURIComponent(sessionId), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
-  });
+  const res = await fetchImpl(
+    withBasePath('/api/rename-session?id=' + encodeURIComponent(sessionId)),
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    },
+  );
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'rename failed');
   return data;

@@ -6,6 +6,8 @@
 // holds Promises, never the resolved payload, so a hit fed straight from the
 // network is still fresh by the time the route mounts.
 
+import { withBasePath } from '../shared/base-path.js';
+
 const inflight = new Map();
 const MAX_ENTRIES = 16;
 
@@ -15,7 +17,7 @@ export function prefetchSession(id, { fetchImpl = fetch } = {}) {
     const oldest = inflight.keys().next().value;
     if (oldest) inflight.delete(oldest);
   }
-  const promise = fetchImpl(`/api/session?id=${encodeURIComponent(id)}&paginate=1`, {
+  const promise = fetchImpl(withBasePath(`/api/session?id=${encodeURIComponent(id)}&paginate=1`), {
     headers: { Accept: 'application/json' },
   })
     .then((resp) => {

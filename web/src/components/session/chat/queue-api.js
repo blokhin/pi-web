@@ -7,9 +7,11 @@
 // "best-effort" behaviour (the UI shows an error toast but the panel stays
 // usable).
 
+import { withBasePath } from '../../../shared/base-path.js';
+
 export function createQueueApi({ sessionId, fetchImpl = fetch } = {}) {
   if (!sessionId) throw new Error('createQueueApi: sessionId is required');
-  const base = `/api/chat/queue?id=${encodeURIComponent(sessionId)}`;
+  const base = withBasePath(`/api/chat/queue?id=${encodeURIComponent(sessionId)}`);
 
   async function readJSON(resp) {
     if (!resp.ok) {

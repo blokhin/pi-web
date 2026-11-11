@@ -20,6 +20,7 @@ import fil from './locales/fil.js';
 import my from './locales/my.js';
 import km from './locales/km.js';
 import lo from './locales/lo.js';
+import { BASE_PATH } from './base-path.js';
 
 export const LOCALE_KEY = 'pi-web:v1:locale';
 export const CUSTOM_LANGUAGES_KEY = 'pi-web:v1:custom-languages';
@@ -100,6 +101,13 @@ export function t(key, params) {
   let str = key in dict ? dict[key] : key in en ? en[key] : key;
   if (params && typeof str === 'string') {
     str = str.replace(/\{(\w+)\}/g, (m, name) => (name in params ? String(params[name]) : m));
+  }
+  // Locale strings embed root-absolute links (e.g. '<a href="/settings">').
+  // Under a reverse-proxy mount those must point inside the mount, and the
+  // locale files are machine-generated, so rewrite centrally here instead of
+  // in 14 translated copies of every string.
+  if (typeof str === 'string' && BASE_PATH && str.includes('href="/')) {
+    str = str.replace(/href="\//g, `href="${BASE_PATH}/`);
   }
   return str;
 }

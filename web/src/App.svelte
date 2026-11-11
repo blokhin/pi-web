@@ -6,6 +6,7 @@
   import SchedulesPage from './routes/SchedulesPage.svelte';
   import NotFoundPage from './routes/NotFoundPage.svelte';
   import VersionController from './components/shared/VersionController.svelte';
+  import { stripBasePath } from './shared/base-path.js';
 
   let {
     path: initialPath = typeof window !== 'undefined' ? window.location.pathname : '/',
@@ -14,8 +15,9 @@
 
   // Reactive current route. Seeded from the props (so prop-driven tests stay
   // deterministic) and thereafter updated only by real navigation events, never
-  // re-read on mount.
-  let path = $state(untrack(() => initialPath));
+  // re-read on mount. The pathname is stripped of the deployment's base path
+  // (no-op at the origin root) so route matching below stays route-space.
+  let path = $state(untrack(() => stripBasePath(initialPath)));
   let search = $state(untrack(() => initialSearch));
 
   // The session route is keyed on this so a session→session navigation (same
@@ -33,7 +35,7 @@
   // pushes the same URL) is a no-op.
   onMount(() => {
     const syncPath = () => {
-      path = window.location.pathname;
+      path = stripBasePath(window.location.pathname);
       search = window.location.search;
     };
     const { history } = window;

@@ -1,3 +1,10 @@
+// Per-session running-status stream. `topic` is a session id or '__all__' for
+// index-wide events. Consumers share one EventSource per topic and re-attach
+// their handlers on every subscribe (see shared/app-events.js for the shared
+// stream registry).
+
+import { withBasePath } from './base-path.js';
+
 function parseJSON(data) {
   try {
     return JSON.parse(data);
@@ -60,7 +67,7 @@ export function createStatusEvents({
   function connect() {
     if (!EventSourceImpl) return;
     cleanup();
-    const es = new EventSourceImpl(`/events?id=${encodeURIComponent(topic)}`);
+    const es = new EventSourceImpl(withBasePath(`/events?id=${encodeURIComponent(topic)}`));
     stream = es;
 
     es.onmessage = (event) => onMessage(event.data);

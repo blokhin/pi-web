@@ -86,7 +86,7 @@
     if (cwd) params.push('project=' + encodeURIComponent(cwd));
     if (query) params.push('q=' + encodeURIComponent(query));
     if (Number.isFinite(limit) && limit > 0) params.push('limit=' + limit);
-    const url = '/api/sessions' + (params.length ? '?' + params.join('&') : '');
+    const url = withBasePath('/api/sessions') + (params.length ? '?' + params.join('&') : '');
     const response = await fetchImpl(url);
     const data = await response.json();
     return (data.sessions || []).sort((a, b) => {
@@ -112,6 +112,7 @@
   } from '../../shared/command-palette-runtime.js';
   import { icon, X } from '../../shared/icons.js';
   import { t } from '../../shared/i18n.js';
+  import { withBasePath } from '../../shared/base-path.js';
   import { createStatusEvents } from '../../shared/status-events.js';
   import { getSpinnerConfig } from '../../session/live/chat-preview.js';
 
@@ -171,7 +172,7 @@
   function go(url) {
     if (!url) return;
     if (navigate) navigate(url);
-    else window.location.href = url;
+    else window.location.href = withBasePath(url);
   }
 
   function close() {

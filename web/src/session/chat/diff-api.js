@@ -1,4 +1,5 @@
 import { getJSON, postJSON } from '../../shared/api.js';
+import { withBasePath } from '../../shared/base-path.js';
 
 export function getDiff(sessionId, { getImpl = getJSON } = {}) {
   return getImpl(`/api/git/diff?id=${encodeURIComponent(sessionId)}`);
@@ -14,7 +15,9 @@ export function saveReviewComment(sessionId, comment, { postImpl = postJSON } = 
 
 export function deleteReviewComment(sessionId, id, { fetchImpl = fetch } = {}) {
   return fetchImpl(
-    `/api/diff/reviews?session=${encodeURIComponent(sessionId)}&id=${encodeURIComponent(id)}`,
+    withBasePath(
+      `/api/diff/reviews?session=${encodeURIComponent(sessionId)}&id=${encodeURIComponent(id)}`,
+    ),
     { method: 'DELETE', headers: { Accept: 'application/json' } },
   ).then((r) => r.json());
 }

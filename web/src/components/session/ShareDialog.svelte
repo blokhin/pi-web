@@ -6,6 +6,7 @@
   import { onMount } from 'svelte';
   import { icon, Share2 } from '../../shared/icons.js';
   import { t } from '../../shared/i18n.js';
+  import { withBasePath } from '../../shared/base-path.js';
   import { showToast } from '../../shared/toast.js';
   import { copyToClipboard } from '../../shared/clipboard.js';
 
@@ -40,7 +41,7 @@
     const onShare = () => {
       shareBtn.innerHTML = '<span class="working-dots"></span>';
       shareBtn.disabled = true;
-      fetch('/share?id=' + encodeURIComponent(sessionId), { method: 'POST' })
+      fetch(withBasePath('/share?id=' + encodeURIComponent(sessionId)), { method: 'POST' })
         .then((r) => r.json())
         .then((data) => {
           shareBtn.innerHTML = icon(Share2, { size: 14 }) + t('menu.share');

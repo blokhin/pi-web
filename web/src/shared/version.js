@@ -1,5 +1,6 @@
 import { escapeHtml } from './escape.js';
 import { t } from './i18n.js';
+import { withBasePath } from './base-path.js';
 
 let active = null;
 
@@ -88,7 +89,7 @@ export function versionLabel(info) {
 }
 
 export async function fetchVersionInfo({ fetchImpl = fetch, force = false } = {}) {
-  const url = force ? '/api/check-update' : '/api/version';
+  const url = withBasePath(force ? '/api/check-update' : '/api/version');
   const res = await fetchImpl(url, {
     method: force ? 'POST' : 'GET',
     headers: { Accept: 'application/json' },

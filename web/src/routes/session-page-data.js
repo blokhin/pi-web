@@ -1,5 +1,6 @@
 import { decodeBase64JSON } from '../session/data/session-data.js';
 import { t } from '../shared/i18n.js';
+import { withBasePath } from '../shared/base-path.js';
 import { consumeSessionPrefetch } from './session-prefetch.js';
 
 // The session route's HTML shell embeds the session payload (and scratchpad) in
@@ -54,9 +55,12 @@ export function firstMessageStub(entries = []) {
 export async function loadScratchpad(projectPath, { fetchImpl = fetch } = {}) {
   if (!projectPath) return '';
   try {
-    const resp = await fetchImpl(`/api/scratchpad?project=${encodeURIComponent(projectPath)}`, {
-      headers: { Accept: 'application/json' },
-    });
+    const resp = await fetchImpl(
+      withBasePath(`/api/scratchpad?project=${encodeURIComponent(projectPath)}`),
+      {
+        headers: { Accept: 'application/json' },
+      },
+    );
     if (!resp.ok) return '';
     const data = await resp.json();
     return data?.content || '';
@@ -154,9 +158,12 @@ export async function loadSessionPageState({
     }
   }
   if (!data) {
-    const resp = await fetchImpl(`/api/session?id=${encodeURIComponent(sessionId)}&paginate=1`, {
-      headers: { Accept: 'application/json' },
-    });
+    const resp = await fetchImpl(
+      withBasePath(`/api/session?id=${encodeURIComponent(sessionId)}&paginate=1`),
+      {
+        headers: { Accept: 'application/json' },
+      },
+    );
     if (!resp.ok)
       throw new Error(resp.status === 404 ? t('session.notFound') : t('session.loadFailed'));
     data = await resp.json();

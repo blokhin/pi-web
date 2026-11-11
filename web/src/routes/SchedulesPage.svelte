@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { navigate } from '../shared/navigation.js';
+  import { withBasePath } from '../shared/base-path.js';
   import { t } from '../shared/i18n.js';
   import FullScreenSheet from '../components/session/FullScreenSheet.svelte';
   import {
@@ -342,7 +343,7 @@
 <div class="session-header-bar">
   <div class="session-header-left">
     <a
-      href={backHref}
+      href={withBasePath(backHref)}
       class="session-header-back"
       onclick={(e) => {
         e.preventDefault();

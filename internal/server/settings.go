@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"pi-web/internal/ui"
 )
 
 // handleSettingsPage renders the global /settings page through the SPA shell.
@@ -16,7 +18,9 @@ func (s *Server) handleSettingsPage(w http.ResponseWriter, r *http.Request) {
 
 // handleAppShell renders the Svelte SPA shell for browser-owned routes. The
 // optional bootstrap is the base64 session payload embedded so the session
-// route can paint without a round-trip to /api/session (empty for other routes).
+// route can paint without a round-trip to /api/session (empty for other
+// routes). The shell honors the request's X-Forwarded-Prefix so a reverse
+// proxy can mount pi-web under a URL path.
 func (s *Server) handleAppShell(w http.ResponseWriter, r *http.Request, bootstrap string) {
 	if s.renderAppShell == nil {
 		http.NotFound(w, r)
@@ -27,7 +31,7 @@ func (s *Server) handleAppShell(w http.ResponseWriter, r *http.Request, bootstra
 	// cached: a stale shell would point at old (now-404) chunks and pin the
 	// browser to an outdated bundle after a rebuild.
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-	if err := s.renderAppShell(w, bootstrap); err != nil {
+	if err := s.renderAppShell(w, bootstrap, ui.PrefixFromRequest(r)); err != nil {
 		if !isBrokenPipe(err) {
 			fmt.Fprintf(os.Stderr, "app shell template error: %v\n", err)
 		}

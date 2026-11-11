@@ -10,6 +10,7 @@
     MoreHorizontal,
   } from '../../shared/icons.js';
   import { t } from '../../shared/i18n.js';
+  import { withBasePath } from '../../shared/base-path.js';
   import { navigate, handleNavClick, backState } from '../../shared/navigation.js';
   import { openProjects } from '../../session/session-modals.svelte.js';
   import { showToast } from '../../shared/toast.js';
@@ -61,7 +62,7 @@
       newBtn.innerHTML = '<span class="working-dots"></span>';
       newBtn.disabled = true;
       try {
-        const response = await fetch('/api/new-session', {
+        const response = await fetch(withBasePath('/api/new-session'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ path: cwd, sourceSessionId: sessionId }),
@@ -105,8 +106,10 @@
 
 <div class="session-header-bar">
   <div class="session-header-left">
-    <a href="/" class="session-header-back" onclick={(event) => handleNavClick(event, '/')}
-      ><span>←</span> {t('session.back')}</a
+    <a
+      href={withBasePath('/')}
+      class="session-header-back"
+      onclick={(event) => handleNavClick(event, '/')}><span>←</span> {t('session.back')}</a
     >
     <button
       id="tree-toggle"
@@ -130,7 +133,7 @@
   <span class="session-header-title" id="session-header-title">{sessionTitle.name || title}</span>
   <div class="session-header-right">
     <a
-      href="/schedules"
+      href={withBasePath('/schedules')}
       class="session-header-schedules"
       data-schedules-btn
       title={t('schedules.navTitle')}

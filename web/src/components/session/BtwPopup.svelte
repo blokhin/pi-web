@@ -7,6 +7,7 @@
   import { onMount } from 'svelte';
   import { getSpinnerConfig } from '../../session/live/chat-preview.js';
   import { t } from '../../shared/i18n.js';
+  import { withBasePath } from '../../shared/base-path.js';
   import { icon, X, Square, Send } from '../../shared/icons.js';
   import {
     enableBtwDrag,
@@ -54,7 +55,7 @@
   const parentTopic = () => parentId || GLOBAL_PARENT;
   const isMobile = () =>
     !!(window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
-  const doFetch = (...args) => window.fetch(...args);
+  const doFetch = (url, ...args) => window.fetch(withBasePath(url), ...args);
   const toHtml = createBtwMarkdownRenderer({ documentImpl: document });
   const renderEntryParts = (entry) => renderBtwEntryParts(entry, { toHtml });
 

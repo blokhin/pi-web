@@ -1,9 +1,11 @@
+import { withBasePath } from '../../shared/base-path.js';
+
 export function getSessionIdFromLocation({ locationImpl = location } = {}) {
   return locationImpl.search.split('id=')[1]?.split('&')[0] || '';
 }
 
 export function createSessionEventSource(sessionId, { EventSourceImpl = EventSource } = {}) {
-  return new EventSourceImpl('/events?id=' + encodeURIComponent(sessionId));
+  return new EventSourceImpl(withBasePath('/events?id=' + encodeURIComponent(sessionId)));
 }
 
 export async function handleSessionReload({
@@ -24,7 +26,9 @@ export async function handleSessionReload({
   onReloaded = () => {},
   onNewEntries = null,
 } = {}) {
-  const response = await fetchImpl('/api/session?id=' + encodeURIComponent(sessionId));
+  const response = await fetchImpl(
+    withBasePath('/api/session?id=' + encodeURIComponent(sessionId)),
+  );
   const data = await response.json();
   const entries = data.entries || [];
   onReloaded({ ...data, entries });

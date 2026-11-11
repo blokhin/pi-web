@@ -1,5 +1,7 @@
+import { withBasePath } from '../../shared/base-path.js';
+
 export function createBtwEventSource(topic, { EventSourceImpl = EventSource } = {}) {
-  return new EventSourceImpl('/events?id=' + encodeURIComponent(topic));
+  return new EventSourceImpl(withBasePath('/events?id=' + encodeURIComponent(topic)));
 }
 
 export function setupBtwSessionEvents({

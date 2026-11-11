@@ -2,6 +2,7 @@
   import { onMount, tick } from 'svelte';
   import { icon, ExternalLink, X } from '../../shared/icons.js';
   import { t } from '../../shared/i18n.js';
+  import { withBasePath } from '../../shared/base-path.js';
   import {
     cleanVersion,
     fetchVersionInfo,
@@ -96,14 +97,14 @@
     busy = true;
     setStatus(t('version.installing'), 'info');
     try {
-      const res = await effectiveFetch('/api/update', {
+      const res = await effectiveFetch(withBasePath('/api/update'), {
         method: 'POST',
         headers: { Accept: 'application/json' },
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       setStatus(t('version.restarting'), 'info');
-      effectiveFetch('/api/restart', {
+      effectiveFetch(withBasePath('/api/restart'), {
         method: 'POST',
         headers: { Accept: 'application/json' },
       }).catch(() => {});
@@ -125,7 +126,7 @@
         return;
       }
       try {
-        const res = await effectiveFetch('/api/version', {
+        const res = await effectiveFetch(withBasePath('/api/version'), {
           method: 'GET',
           headers: { Accept: 'application/json' },
           cache: 'no-store',
