@@ -18,8 +18,11 @@ func TestRewriteManifestHonorsPrefix(t *testing.T) {
 	if err := json.Unmarshal(out, &doc); err != nil {
 		t.Fatalf("rewritten manifest is not valid JSON: %v\n%s", err, out)
 	}
-	if doc.StartURL != "/agent/pi" {
-		t.Fatalf("start_url = %q, want %q", doc.StartURL, "/agent/pi")
+	if doc.StartURL != "/agent/pi/" {
+		// start_url must stay within scope (spec: scope is a path prefix of
+		// start_url): "/" joined under "/agent/pi" is "/agent/pi/", same
+		// shape as the embedded root manifest's pair ("/" + "/").
+		t.Fatalf("start_url = %q, want %q", doc.StartURL, "/agent/pi/")
 	}
 	if doc.Scope != "/agent/pi/" {
 		t.Fatalf("scope = %q, want %q", doc.Scope, "/agent/pi/")
